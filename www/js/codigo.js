@@ -8,6 +8,10 @@ const LISTAR_EVALUACIONES = document.querySelector("#pantalla-listar-evaluacione
 const NAV = document.querySelector("ion-nav");
 const MAPA = document.querySelector("#pantalla-mapa");
 const URL_BASE = "https://goalify.develotion.com/";
+<<<<<<< HEAD
+
+=======
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
 
 Inicio();
 
@@ -26,6 +30,10 @@ function ArmarMenu() {
     if (token) {
         html += `    <ion-item href="/agregar-evaluaciones" onclick="CerrarMenu()">AGREGAR EVALUACIONES</ion-item>
                      <ion-item href="/listar-evaluaciones" onclick="CerrarMenu()">LISTAR EVALUACIONES</ion-item>
+<<<<<<< HEAD
+                     <ion-item href="/mapa" onclick="CerrarMenu()">MAPA</ion-item>
+=======
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
                      <ion-item href="/" onclick="Logout()">LOGOUT</ion-item>
                     `
     } else {
@@ -153,6 +161,7 @@ function Navegar(evt) {
         LimpiarListaEvaluaciones();
         listadoEvaluaciones();
     } else if (ruta == "/mapa") {
+        CargarMapa();
         MAPA.style.display = "block";
     }
 
@@ -196,6 +205,54 @@ Descripcion: Este metodo obtiene los datos del formulario de evaluacion y los en
 let ListaDeObjetivos = [];
 
 async function ObtenerObjetivos() {
+<<<<<<< HEAD
+    try{
+         PrenderLoading("Cargando objetivos...");
+        let response = await fetch(`${URL_BASE}objetivos.php`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': localStorage.getItem("token"),
+                'iduser': localStorage.getItem("iduser")
+            },
+        });
+        if(response.status == 401){
+            throw 401;
+        }
+        if(response.status == 403){
+            throw 403;
+        }
+        let body = await response.json();
+
+        if (body.codigo !== 200) {
+            Alertar("Error", "", "Error al obtener objetivos.");
+            return;
+        }
+
+        ListaDeObjetivos = [];
+        let option = ``;
+        for (let objetivo of body.objetivos) {
+            option += ` <ion-select-option value="${objetivo.id}">${objetivo.nombre}</ion-select-option>`;
+            ListaDeObjetivos.push(objetivo);
+        }
+        document.querySelector('#slcObjetivo').innerHTML = option;
+    }
+    catch (e) {
+        if (e === 401) {
+            localStorage.clear();
+            ArmarMenu(); 
+            NAV.push("page-login");
+        } else if (e === 403) {
+            Alertar("Error","", "No tiene permisos para este recurso", "");
+        } else {
+            Alertar("Error", "", "Error inesperado", "");
+        }    
+    }
+    finally {
+        ApagarLoading();
+    }
+
+=======
     PrenderLoading("Cargando objetivos...");
     let response = await fetch(`${URL_BASE}objetivos.php`, {
         method: 'GET',
@@ -220,7 +277,9 @@ async function ObtenerObjetivos() {
     }
     document.querySelector('#slcObjetivo').innerHTML = option;
     ApagarLoading();
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
 }
+
 
 function ObtenerPuntuaciones() {
     let puntuacion = ``;
@@ -246,12 +305,55 @@ async function AgregarEvaluacion() {
     if (fechaIngresadaStr > hoyStr) {
         Alertar("Error", "", "La fecha no puede ser posterior a hoy.");
         return;
-    } else {
+    } 
+    else {
         let objetivoEvaluado = new Object();
         objetivoEvaluado.idObjetivo = objetivoSeleccionado;
         objetivoEvaluado.idUsuario = localStorage.getItem("iduser");
         objetivoEvaluado.calificacion = parseInt(puntuacionSeleccionada);
         objetivoEvaluado.fecha = fechaIngresadaStr;
+<<<<<<< HEAD
+        try{
+            PrenderLoading("Agregando evaluación...");
+            // Enviar los datos al servidor
+            let response = await fetch(`${URL_BASE}evaluaciones.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'token': localStorage.getItem("token"),
+                    'iduser': localStorage.getItem("iduser")
+                },
+                body: JSON.stringify(objetivoEvaluado)
+            });
+            if(response.status == 401){
+                throw 401;
+            }
+            if(response.status == 403){
+                throw 403;
+            }
+            let body = await response.json();
+
+            if (body.codigo === 200) {
+                MostrarToast('Evaluación agregada correctamente.', 3000);
+                listadoEvaluaciones(); // Actualizar la lista de evaluaciones
+            } else {
+                Alertar("Error", "", "Error al agregar la evaluación.");
+            }
+        }   
+        catch (e) {
+            if (e === 401) {
+                localStorage.clear();
+                ArmarMenu(); 
+                NAV.push("page-login");
+            } else if (e === 403) {
+                Alertar("Error","", "No tiene permisos para este recurso", "");
+            } else {
+                Alertar("Error", "", "Error inesperado", "");
+            }  
+        }  
+        finally {
+            ApagarLoading();
+=======
         PrenderLoading("Agregando evaluación...");
         // Enviar los datos al servidor
         let response = await fetch(`${URL_BASE}evaluaciones.php`, {
@@ -269,11 +371,16 @@ async function AgregarEvaluacion() {
             listadoEvaluaciones(); // Actualizar la lista de evaluaciones
         } else {
             Alertar("Error", "", "Error al agregar la evaluación.");
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
         }
     }
     ApagarLoading();
 }
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
 function formatearFecha(fecha) {
     return fecha.toISOString().split("T")[0];
 }
@@ -284,6 +391,116 @@ Metodo: listadoEvaluaciones
 Descripcion: Este metodo obtiene las evaluaciones del usuario y las muestra en una tabla
 #############################################################################*/
 async function ObtenerEvaluaciones() {
+<<<<<<< HEAD
+    try{
+        let response = await fetch(`${URL_BASE}evaluaciones.php?idUsuario=${localStorage.getItem("iduser")}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': localStorage.getItem("token"),
+                'iduser': localStorage.getItem("iduser")
+            }
+        });
+        if(response.status == 401){
+            throw 401;
+        }
+        if(response.status == 403){
+            throw 403;
+        }
+        let body = await response.json();
+        if (body.codigo !== 200) {
+            Alertar("Error", "", "Error al obtener las evaluaciones.");
+            return;
+        }
+        return body;
+    }
+    catch (e) {
+        if (e === 401) {
+            localStorage.clear();
+            ArmarMenu(); 
+            NAV.push("page-login");
+        } else if (e === 403) {
+            Alertar("Error","", "No tiene permisos para este recurso", "");
+        } else {
+            Alertar("Error", "", "Error inesperado", "");
+        }  
+    }  
+    finally {
+        ApagarLoading();
+    }
+}
+
+let lista = document.querySelector('#listadoEvaluaciones');
+
+async function listadoEvaluaciones() {
+    PrenderLoading("Cargando evaluaciones...");
+    let body = await ObtenerEvaluaciones();
+    if (!body.evaluaciones || body.evaluaciones.length === 0) {
+        lista.innerHTML = `
+          <ion-card color="warning">
+            <ion-card-header>
+              <ion-card-title>⚠️ Sin evaluaciones</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              Aún no has registrado ninguna evaluación.<br>
+              ¡Agrega una para empezar!
+            </ion-card-content>
+          </ion-card>
+        `;
+        ActualizarPuntajes([]);
+        ApagarLoading();
+        return;
+    }
+    FiltrarEvaluaciones();
+    //ActualizarPuntajes(body.evaluaciones);
+    ApagarLoading();
+}
+
+function ActualizarPuntajes(evaluaciones) {
+    let hoyStr = formatearFecha(new Date());
+    let puntajeGlobal = 0;
+    let puntajeDiario = 0;
+
+    // Calcular promedio global
+    let sumaTotal = 0;
+    for (let e of evaluaciones){
+        sumaTotal += Number(e.calificacion);
+    } 
+    if(evaluaciones.length > 0){
+      puntajeGlobal = (sumaTotal / evaluaciones.length).toFixed(2);
+    }
+  
+    // Obtener evaluaciones del día de hoy
+    let evaluacionesHoy = [];
+    for (let e of evaluaciones) {
+        if (e.fecha === hoyStr) {
+            evaluacionesHoy.push(e);
+        }
+    }
+
+    console.log("Evaluaciones de hoy:", evaluacionesHoy);
+    // Calcular promedio diario
+    let sumaHoy = 0;
+    for (let e of evaluacionesHoy) {
+        sumaHoy += Number(e.calificacion);
+    }
+
+    if(evaluacionesHoy.length > 0){
+      puntajeDiario = (sumaHoy / evaluacionesHoy.length).toFixed(2);
+    }
+
+    lista.innerHTML = `
+        <ion-card color="light">
+            <ion-card-header>
+                <ion-card-title>Informe de Cumplimiento</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+                <p><b>Puntaje Global:</b> ${puntajeGlobal}</p>
+                <p><b>Puntaje Diario:</b> ${puntajeDiario}</p>
+            </ion-card-content>
+        </ion-card>
+    ` + lista.innerHTML;
+=======
     let response = await fetch(`${URL_BASE}evaluaciones.php?idUsuario=${localStorage.getItem("iduser")}`, {
         method: 'GET',
         headers: {
@@ -322,6 +539,7 @@ async function listadoEvaluaciones() {
     FiltrarEvaluaciones();
     ApagarLoading();
 
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
 }
 
 function LimpiarListaEvaluaciones() {
@@ -334,6 +552,9 @@ async function FiltrarEvaluaciones(tipo = 'todas') {
     PrenderLoading("Filtrando evaluaciones...");
     let body = await ObtenerEvaluaciones();
     let fila = '';
+ 
+    LimpiarListaEvaluaciones();
+ 
     for (evaluacion of body.evaluaciones) {
         for (objetivo of ListaDeObjetivos) {
             if (evaluacion.idObjetivo === objetivo.id) {
@@ -344,7 +565,11 @@ async function FiltrarEvaluaciones(tipo = 'todas') {
         // Filtrar por tipo
         let fechaDeHoy = new Date();
         if (tipo === 'todas') {
+<<<<<<< HEAD
+            //LimpiarListaEvaluaciones();
+=======
             LimpiarListaEvaluaciones();
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
             fila += `
                 <ion-item-sliding>
                     <ion-item-options side="start">
@@ -358,7 +583,11 @@ async function FiltrarEvaluaciones(tipo = 'todas') {
                 </ion-item-sliding>
         `;
         } else if (tipo === 'mes') {
+<<<<<<< HEAD
+            //LimpiarListaEvaluaciones();
+=======
             LimpiarListaEvaluaciones();
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
             let fechaEvaluacion = new Date(evaluacion.fecha);
             let unMesAtras = new Date(fechaDeHoy.setMonth(fechaDeHoy.getMonth() - 1));
             if (fechaEvaluacion >= unMesAtras) {
@@ -376,7 +605,11 @@ async function FiltrarEvaluaciones(tipo = 'todas') {
                 `;
             }
         } else if (tipo === 'semana') {
+<<<<<<< HEAD
+            //LimpiarListaEvaluaciones();
+=======
             LimpiarListaEvaluaciones();
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
             let fechaEvaluacion = new Date(evaluacion.fecha);
             let unaSemanaAtras = new Date(fechaDeHoy.setDate(fechaDeHoy.getDate() - 7));
             if (fechaEvaluacion >= unaSemanaAtras) {
@@ -397,10 +630,54 @@ async function FiltrarEvaluaciones(tipo = 'todas') {
 
     }
     lista.innerHTML += fila;
+<<<<<<< HEAD
+    ActualizarPuntajes(body.evaluaciones);
+=======
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
     ApagarLoading();
 }
 
 async function EliminarEvaluacion(idEvaluacion) {
+<<<<<<< HEAD
+    try{
+        PrenderLoading("Eliminando evaluación...");
+        let response = await fetch(`${URL_BASE}evaluaciones.php?idEvaluacion=${idEvaluacion}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': localStorage.getItem("token"),
+                'iduser': localStorage.getItem("iduser")
+            }
+        });
+        if(response.status == 401){
+            throw 401;
+        }
+        if(response.status == 403){
+            throw 403;
+        }
+        let body = await response.json();
+        if (body.codigo === 200) {
+            MostrarToast('Evaluación eliminada correctamente.', 3000);
+            listadoEvaluaciones(); // Actualizar la lista de evaluaciones
+        } else {
+            Alertar('Hubo un error', '', 'Error al eliminar la evaluación.');
+        }
+    }
+    catch (e) {
+        if (e === 401) {
+            localStorage.clear();
+            ArmarMenu(); 
+            NAV.push("page-login");
+        } else if (e === 403) {
+            Alertar("Error","", "No tiene permisos para este recurso", "");
+        } else {
+            Alertar("Error", "", "Error inesperado", "");
+        }  
+    }  
+    finally {
+        ApagarLoading();
+    }
+=======
     PrenderLoading("Eliminando evaluación...");
     let response = await fetch(`${URL_BASE}evaluaciones.php?idEvaluacion=${idEvaluacion}`, {
         method: 'DELETE',
@@ -418,6 +695,7 @@ async function EliminarEvaluacion(idEvaluacion) {
         Alertar('Hubo un error', '', 'Error al eliminar la evaluación.');
     }
     ApagarLoading();
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
 }
 
 function Alertar(titulo, subtitulo, mensaje) {
@@ -451,4 +729,100 @@ function MostrarToast(mensaje, duracion) {
 
     document.body.appendChild(toast);
     toast.present();
+<<<<<<< HEAD
+}
+
+function CargarMapa(){
+    if(map!=null){
+        map.remove();
+    }
+    setTimeout(function(){CrearMapa()},200)
+}
+
+var map = null;
+async function CrearMapa() {
+
+    map = L.map('map').setView([-15, -60], 3);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        minZoom: 1,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    PrenderLoading("Cargando datos del mapa...");
+
+    let dataUsuariosPorPais = await ObtenerUsuariosPorPais();
+    let dataPaises = await ObtenerPaises();
+
+    ApagarLoading();
+
+    if (!dataUsuariosPorPais || dataUsuariosPorPais.codigo !== 200) {
+        Alertar("Error", "", "No se pudieron obtener los usuarios por país.");
+        return;
+    }
+    if (!dataPaises) {
+        Alertar("Error", "", "No se pudieron obtener los países.");
+        return;
+    }
+
+    for (let usuarios of dataUsuariosPorPais.paises) {
+        for (let p of dataPaises.paises) {
+            if (Number(p.id) === Number(usuarios.id)) {
+                if (p.latitude && p.longitude) {
+                    L.marker([p.latitude, p.longitude]).addTo(map).bindTooltip(`<b>${p.name}</b><br> ${usuarios.cantidadDeUsuarios} usuarios registrados`);
+                }
+            }
+        }
+    }    
+}
+
+async function ObtenerUsuariosPorPais() {
+    try{
+        PrenderLoading("Obteniendo usuarios por pais...");
+        let response = await fetch(`${URL_BASE}usuariosPorPais.php`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': localStorage.getItem("token"),
+                'iduser': localStorage.getItem("iduser")
+            },
+        });
+        if(response.status == 401){
+            throw 401;
+        }
+        if(response.status == 403){
+            throw 403;
+        }
+        let body = await response.json();
+        if (body.codigo !== 200) {
+            Alertar("Error", "", "Error al obtener usuarios por pais.");
+            return null;
+        }
+        return body;
+    }
+    catch (e) {
+        if (e === 401) {
+            localStorage.clear();
+            ArmarMenu(); 
+            NAV.push("page-login");
+        } else if (e === 403) {
+            Alertar("Error","", "No tiene permisos para este recurso", "");
+        } else {
+            Alertar("Error", "", "Error inesperado", "");
+        }  
+    }  
+    finally {
+        ApagarLoading();
+    }
+}
+
+async function ObtenerPaises() {
+    PrenderLoading("Cargando países...");
+    let response = await fetch(`${URL_BASE}paises.php`);
+    let body = await response.json();
+    ApagarLoading();
+    return body;
+=======
+>>>>>>> 10751a8cd1ea09ee1c1ada9c004c3f4a4f1ff17d
 }
