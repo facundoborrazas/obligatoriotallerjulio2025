@@ -7,6 +7,7 @@ const AGREGAR_EVALUACIONES = document.querySelector("#pantalla-agregar-evaluacio
 const LISTAR_EVALUACIONES = document.querySelector("#pantalla-listar-evaluaciones");
 const NAV = document.querySelector("ion-nav");
 const MAPA = document.querySelector("#pantalla-mapa");
+const URL_BASE = "https://goalify.develotion.com/";
 
 Inicio();
 
@@ -25,7 +26,7 @@ function ArmarMenu() {
     if (token) {
         html += `    <ion-item href="/agregar-evaluaciones" onclick="CerrarMenu()">AGREGAR EVALUACIONES</ion-item>
                      <ion-item href="/listar-evaluaciones" onclick="CerrarMenu()">LISTAR EVALUACIONES</ion-item>
-                     <ion-item  onclick="Logout()">LOGOUT</ion-item>
+                     <ion-item href="/" onclick="Logout()">LOGOUT</ion-item>
                     `
     } else {
         html += `     <ion-item href="/registro" onclick="CerrarMenu()">REGISTRO</ion-item>
@@ -43,13 +44,13 @@ function Eventos() {
 }
 
 async function TomarDatosRegistro() {
-    let u = document.querySelector("#txtRegistroUser").value;
-    let p = document.querySelector("#txtRegistroPassword").value;
+    let u = document.querySelector("#txtRegistroUser").value?.trim();
+    let p = document.querySelector("#txtRegistroPassword").value?.trim();
     let idPais = document.querySelector("#slcPais").value;
 
     //Validar que los campos no esten vacios
-    if (u === '' || p === '') {
-        alert("Por favor complete todos los campos");
+    if (!u || !p || !idPais || idPais === "") {
+        MostrarToast("Por favor complete todos los campos", 3000);
         return;
     }
 
@@ -58,7 +59,9 @@ async function TomarDatosRegistro() {
     loginObj.password = p;
     loginObj.idPais = idPais;
 
-    let response = await fetch(`https://goalify.develotion.com/usuarios.php`, {
+
+    PrenderLoading("Procesando registro...");
+    let response = await fetch(`${URL_BASE}usuarios.php`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -68,18 +71,25 @@ async function TomarDatosRegistro() {
 
     let body = await response.json();
 
-    if (body.codigo == 200) {
+    if (body.codigo === 200) {
 
         localStorage.setItem("token", body.token);
         localStorage.setItem("iduser", body.id);
 
         ArmarMenu();
         NAV.push("page-home");
-
-    } else {
-        alert("Error");
+        MostrarToast('Inicio de sesión exitoso.', 3000);
     }
-
+    else if (body.codigo === 409) {
+        Alertar("Error", "Error al crear usuario", "El usuario ya existe. Elija otro nombre.");
+    }
+    else if (body.codigo === 400) {
+        Alertar("Error", "Error al crear usuario", "Debe completar todos los campos.");
+    }
+    else {
+        Alertar("Error", "Error al crear usuario", body.mensaje);
+    }
+    ApagarLoading();
 }
 
 async function TomarDatosLogin() {
@@ -90,8 +100,8 @@ async function TomarDatosLogin() {
     let loginObj = new Object();
     loginObj.usuario = u;
     loginObj.password = p;
-
-    let response = await fetch(`https://goalify.develotion.com/login.php`, {
+    PrenderLoading("Iniciando sesión...");
+    let response = await fetch(`${URL_BASE}login.php`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -101,18 +111,25 @@ async function TomarDatosLogin() {
 
     let body = await response.json();
 
-    if (body.codigo == 200) {
+    if (body.codigo === 200) {
 
         localStorage.setItem("token", body.token);
         localStorage.setItem("iduser", body.id);
 
         ArmarMenu();
         NAV.push("page-home");
-
-    } else {
-        alert("Error");
+        MostrarToast('Inicio de sesión exitoso.', 3000);
     }
-
+    else if (body.codigo === 401) {
+        Alertar("Error", "Error de autenticación", "Usuario o contraseña incorrectos.");
+    }
+    else if (body.codigo === 400) {
+        Alertar("Error", "Error de autenticación", "Debe completar todos los campos.");
+    }
+    else {
+        Alertar("Error", "Error de autenticación", body.mensaje);
+    }
+    ApagarLoading();
 }
 
 function Navegar(evt) {
@@ -133,6 +150,7 @@ function Navegar(evt) {
     } else if (ruta == "/listar-evaluaciones") {
         LISTAR_EVALUACIONES.style.display = "block";
         ObtenerObjetivos();
+        LimpiarListaEvaluaciones();
         listadoEvaluaciones();
     } else if (ruta == "/mapa") {
         MAPA.style.display = "block";
@@ -141,8 +159,8 @@ function Navegar(evt) {
 }
 
 async function PoblarSelectPaises() {
-
-    let response = await fetch("https://goalify.develotion.com/paises.php");
+    PrenderLoading("Cargando países...");
+    let response = await fetch(`${URL_BASE}paises.php`);
     let body = await response.json();
 
     let html = ``;
@@ -150,7 +168,7 @@ async function PoblarSelectPaises() {
         html += ` <ion-select-option value="${pais.id}">${pais.name}</ion-select-option>`
     }
     document.querySelector("#slcPais").innerHTML = html;
-
+    ApagarLoading();
 }
 
 function Logout() {
@@ -178,7 +196,8 @@ Descripcion: Este metodo obtiene los datos del formulario de evaluacion y los en
 let ListaDeObjetivos = [];
 
 async function ObtenerObjetivos() {
-    let response = await fetch('https://goalify.develotion.com/objetivos.php', {
+    PrenderLoading("Cargando objetivos...");
+    let response = await fetch(`${URL_BASE}objetivos.php`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -187,12 +206,20 @@ async function ObtenerObjetivos() {
         },
     });
     let body = await response.json();
+
+    if (body.codigo !== 200) {
+        Alertar("Error", "", "Error al obtener objetivos.");
+        return;
+    }
+
+    ListaDeObjetivos = [];
     let option = ``;
     for (objetivo of body.objetivos) {
         option += ` <ion-select-option value="${objetivo.id}">${objetivo.nombre}</ion-select-option>`;
         ListaDeObjetivos.push(objetivo);
     }
     document.querySelector('#slcObjetivo').innerHTML = option;
+    ApagarLoading();
 }
 
 function ObtenerPuntuaciones() {
@@ -210,25 +237,24 @@ async function AgregarEvaluacion() {
 
     // Validar que los campos no esten vacios
     if (fechaStr === undefined || objetivoSeleccionado === undefined || puntuacionSeleccionada === undefined) {
-        alert('Por favor, complete todos los campos.');
+        MostrarToast('Por favor, complete todos los campos.', 3000);
         return;
     }
 
-    let fechaIngresada = new Date(fechaStr);
-    // Obtener la fecha actual sin hora (solo yyyy-mm-dd)
-    let hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    if (fechaIngresada > hoy) {
-        alert('La fecha no puede ser posterior a hoy.');
+    let fechaIngresadaStr = formatearFecha(new Date(fechaStr));
+    let hoyStr = formatearFecha(new Date());
+    if (fechaIngresadaStr > hoyStr) {
+        Alertar("Error", "", "La fecha no puede ser posterior a hoy.");
         return;
     } else {
         let objetivoEvaluado = new Object();
         objetivoEvaluado.idObjetivo = objetivoSeleccionado;
         objetivoEvaluado.idUsuario = localStorage.getItem("iduser");
         objetivoEvaluado.calificacion = parseInt(puntuacionSeleccionada);
-        objetivoEvaluado.fecha = fechaStr;
+        objetivoEvaluado.fecha = fechaIngresadaStr;
+        PrenderLoading("Agregando evaluación...");
         // Enviar los datos al servidor
-        let response = await fetch('https://goalify.develotion.com/evaluaciones.php', {
+        let response = await fetch(`${URL_BASE}evaluaciones.php`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -239,20 +265,26 @@ async function AgregarEvaluacion() {
         });
         let body = await response.json();
         if (body.codigo === 200) {
-            alert('Evaluación agregada correctamente.');
+            MostrarToast('Evaluación agregada correctamente.', 3000);
             listadoEvaluaciones(); // Actualizar la lista de evaluaciones
         } else {
-            alert('Error al agregar la evaluación.');
+            Alertar("Error", "", "Error al agregar la evaluación.");
         }
     }
+    ApagarLoading();
 }
+
+function formatearFecha(fecha) {
+    return fecha.toISOString().split("T")[0];
+}
+
 
 /*#############################################################################
 Metodo: listadoEvaluaciones
 Descripcion: Este metodo obtiene las evaluaciones del usuario y las muestra en una tabla
 #############################################################################*/
-async function listadoEvaluaciones() {
-    let response = await fetch(`https://goalify.develotion.com/evaluaciones.php?idUsuario=${localStorage.getItem("iduser")}`, {
+async function ObtenerEvaluaciones() {
+    let response = await fetch(`${URL_BASE}evaluaciones.php?idUsuario=${localStorage.getItem("iduser")}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -262,11 +294,45 @@ async function listadoEvaluaciones() {
     });
     let body = await response.json();
     if (body.codigo !== 200) {
-        alert('Error al obtener las evaluaciones.');
+        Alertar("Error", "", "Error al obtener las evaluaciones.");
         return;
     }
-    let lista = document.querySelector('#listadoEvaluaciones');
-    lista.innerHTML = '';
+    return body;
+}
+
+let lista = document.querySelector('#listadoEvaluaciones');
+
+async function listadoEvaluaciones() {
+    PrenderLoading("Cargando evaluaciones...");
+    let body = await ObtenerEvaluaciones();
+    if (!body.evaluaciones || body.evaluaciones.length === 0) {
+        lista.innerHTML = `
+          <ion-card color="warning">
+            <ion-card-header>
+              <ion-card-title>⚠️ Sin evaluaciones</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              Aún no has registrado ninguna evaluación.<br>
+              ¡Agrega una para empezar!
+            </ion-card-content>
+          </ion-card>
+        `;
+        return;
+    }
+    FiltrarEvaluaciones();
+    ApagarLoading();
+
+}
+
+function LimpiarListaEvaluaciones() {
+    lista.innerHTML = `<ion-button expand="block" onclick="FiltrarEvaluaciones('todas')" id="btnVerTodas">Todas las evaluaciones</ion-button>
+    <ion-button expand="block" onclick="FiltrarEvaluaciones('mes')" id="btnVerMes">Evaluaciones del último mes</ion-button>
+    <ion-button expand="block" onclick="FiltrarEvaluaciones('semana')" id="btnVerUltimaSem">Evaluaciones de la última semana</ion-button>`;
+}
+
+async function FiltrarEvaluaciones(tipo = 'todas') {
+    PrenderLoading("Filtrando evaluaciones...");
+    let body = await ObtenerEvaluaciones();
     let fila = '';
     for (evaluacion of body.evaluaciones) {
         for (objetivo of ListaDeObjetivos) {
@@ -275,30 +341,68 @@ async function listadoEvaluaciones() {
                 evaluacion.emoji = objetivo.emoji;
             }
         }
-        fila += `
-            <ion-card>
-            <ion-card-header>
-                <ion-card-title>${evaluacion.emoji} ${evaluacion.nombre}</ion-card-title>
-            </ion-card-header>
+        // Filtrar por tipo
+        let fechaDeHoy = new Date();
+        if (tipo === 'todas') {
+            LimpiarListaEvaluaciones();
+            fila += `
+                <ion-item-sliding>
+                    <ion-item-options side="start">
+                        <ion-item-option color="danger" id="evaluacion-${evaluacion.id}" onclick="EliminarEvaluacion(${evaluacion.id})">Eliminar</ion-item-option>
+                    </ion-item-options>
 
-            <ion-card-content>
-                Fecha: ${evaluacion.fecha}
-                <br>
-                Calificación: ${evaluacion.calificacion}
-            </ion-card-content>
-            <ion-card-header id="evaluacion-${evaluacion.id}">
-                <ion-button onclick="EliminarEvaluacion(${evaluacion.id})" shape="round">
-                    <ion-icon slot="icon-only" name="trash"></ion-icon>
-                </ion-button>
-            </ion-card-header>
-            </ion-card>
+                    <ion-item>
+                        <ion-label>${evaluacion.emoji} ${evaluacion.nombre} (${evaluacion.calificacion})</ion-label>
+                        <ion-note slot="end">${evaluacion.fecha}</ion-note>
+                    </ion-item>
+                </ion-item-sliding>
         `;
+        } else if (tipo === 'mes') {
+            LimpiarListaEvaluaciones();
+            let fechaEvaluacion = new Date(evaluacion.fecha);
+            let unMesAtras = new Date(fechaDeHoy.setMonth(fechaDeHoy.getMonth() - 1));
+            if (fechaEvaluacion >= unMesAtras) {
+                fila += `
+                    <ion-item-sliding>
+                        <ion-item-options side="start">
+                            <ion-item-option color="danger" id="evaluacion-${evaluacion.id}" onclick="EliminarEvaluacion(${evaluacion.id})">Eliminar</ion-item-option>
+                        </ion-item-options>
+
+                        <ion-item>
+                            <ion-label>${evaluacion.emoji} ${evaluacion.nombre} (${evaluacion.calificacion})</ion-label>
+                            <ion-note slot="end">${evaluacion.fecha}</ion-note>
+                        </ion-item>
+                    </ion-item-sliding>
+                `;
+            }
+        } else if (tipo === 'semana') {
+            LimpiarListaEvaluaciones();
+            let fechaEvaluacion = new Date(evaluacion.fecha);
+            let unaSemanaAtras = new Date(fechaDeHoy.setDate(fechaDeHoy.getDate() - 7));
+            if (fechaEvaluacion >= unaSemanaAtras) {
+                fila += `
+                    <ion-item-sliding>
+                        <ion-item-options side="start">
+                            <ion-item-option color="danger" id="evaluacion-${evaluacion.id}" onclick="EliminarEvaluacion(${evaluacion.id})">Eliminar</ion-item-option>
+                        </ion-item-options>
+
+                        <ion-item>
+                            <ion-label>${evaluacion.emoji} ${evaluacion.nombre} (${evaluacion.calificacion})</ion-label>
+                            <ion-note slot="end">${evaluacion.fecha}</ion-note>
+                        </ion-item>
+                    </ion-item-sliding>
+                `;
+            }
+        }
+
     }
-    lista.innerHTML = fila;
+    lista.innerHTML += fila;
+    ApagarLoading();
 }
 
 async function EliminarEvaluacion(idEvaluacion) {
-    let response = await fetch(`https://goalify.develotion.com/evaluaciones.php?idEvaluacion=${idEvaluacion}`, {
+    PrenderLoading("Eliminando evaluación...");
+    let response = await fetch(`${URL_BASE}evaluaciones.php?idEvaluacion=${idEvaluacion}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
@@ -308,9 +412,43 @@ async function EliminarEvaluacion(idEvaluacion) {
     });
     let body = await response.json();
     if (body.codigo === 200) {
-        alert('Evaluación eliminada correctamente.');
+        MostrarToast('Evaluación eliminada correctamente.', 3000);
         listadoEvaluaciones(); // Actualizar la lista de evaluaciones
     } else {
-        alert('Error al eliminar la evaluación.');
+        Alertar('Hubo un error', '', 'Error al eliminar la evaluación.');
     }
+    ApagarLoading();
+}
+
+function Alertar(titulo, subtitulo, mensaje) {
+    const alert = document.createElement('ion-alert');
+    alert.cssClass = 'my-custom-class';
+    alert.header = titulo;
+    alert.subHeader = subtitulo;
+    alert.message = mensaje;
+    alert.buttons = ['OK'];
+    document.body.appendChild(alert);
+    alert.present();
+}
+
+const loading = document.createElement('ion-loading');
+function PrenderLoading(texto) {
+    loading.cssClass = 'my-custom-class';
+    loading.message = texto;
+    //loading.duration = 2000;
+    document.body.appendChild(loading);
+    loading.present();
+}
+
+function ApagarLoading() {
+    loading.dismiss();
+}
+
+function MostrarToast(mensaje, duracion) {
+    const toast = document.createElement('ion-toast');
+    toast.message = mensaje;
+    toast.duration = duracion;
+
+    document.body.appendChild(toast);
+    toast.present();
 }

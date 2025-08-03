@@ -29,7 +29,7 @@
         <ion-menu side="start" menu-id="first" content-id="main" id="menu">
             <ion-header>
                 <ion-toolbar color="primary">
-                    <iont-title>Menu de inicio</iont-title>
+                    <ion-title>Menu de inicio</ion-title>
                 </ion-toolbar>
             </ion-header>
 
@@ -151,7 +151,7 @@
 
                     <ion-label>Fecha:</ion-label>
                     <ion-datetime-button datetime="datetime"></ion-datetime-button>
-                    <ion-modal [keepContentsMounted]="true">
+                    <ion-modal keepContentsMounted="true">
                         <ng-template>
                             <ion-datetime id="datetime"></ion-datetime>
                         </ng-template>
@@ -170,14 +170,14 @@
                     <ion-buttons slot="start">
                         <ion-menu-button></ion-menu-button>
                     </ion-buttons>
-                    <ion-title>Listar evaluación</ion-title>
+                    <ion-title>Lista de evaluaciones</ion-title>
                 </ion-toolbar>
             </ion-header>
             <ion-content>
-                <ion-label>Lista de evaluaciones</ion-label>
+                <ion-label>Desliza la evaluacion para eliminarla</ion-label>
                 <ion-list id="listadoEvaluaciones">
                     <!-- Aquí se llenará la lista de evaluaciones mediante JS y la API -->
-                     
+
                 </ion-list>
             </ion-content>
         </page-listar-evaluaciones>
